@@ -325,14 +325,14 @@ echo "Installing ZenUp"
 install_local_rpm $zenup_name
 
 echo "Registering Zenoss with ZenUp"
-try su -l -c "/opt/zenup/bin/zenup init $zenup_pristine_name \$ZENHOME" zenoss
+try su -l -c "/opt/zenup/bin/zenup init $MYTMP/$zenup_pristine_name \$ZENHOME" zenoss
 
 echo "Initializing Zenoss"
 try service zenoss start
 try service zenoss stop
 
 echo "Installing RPS"
-try su -l -c "/opt/zenup/bin/zenup install $zenup_zup_name" zenoss
+try su -l -c "/opt/zenup/bin/zenup install $MYTMP/$zenup_zup_name" zenoss
 
 echo "Starting Zenoss"
 enable_service zenoss
