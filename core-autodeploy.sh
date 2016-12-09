@@ -111,9 +111,12 @@ install_local_rpm() {
     rpm_name=$1
     rpm_url=$2
     
-    # Attempt local install first
+    # Attempt to install user provided rpms first
     if [[ -f $SCRIPTPATH/$rpm_name ]]; then
         try yum --nogpgcheck -y localinstall $SCRIPTDIR/$rpm_name
+
+    elif [[ -f $rpm_name ]]; then
+        try yum --nogpgcheck -y localinstall $rpm_name
 
     # If no local package found, try to download it
     elif [[ -n $rpm_url ]]; then
@@ -253,7 +256,7 @@ echo "exclude=rabbitmq-server" >> /etc/yum.conf
 
 if [ ! -f $jre_file ];then
 	echo "Downloading Oracle JRE"
-	try wget --no-check-certificate -N -O $jre_file $jre_url
+    download $jre_url $jre_file
 	try chmod +x $jre_file
 fi
 echo "Installing JRE"
