@@ -53,11 +53,11 @@ zenossdep_url="http://deps.zenoss.com/yum"
 zenossdep_name="zenossdeps"
 zenossdep_rpm="$zenossdep_name-4.2.x-1.$els.noarch.rpm"
 
-zenup_url="http://sourceforge.net/projects/zenoss/files/zenup-1.1/zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm/download"
+zenup_url="https://sourceforge.net/projects/zenoss/files/zenup-1.1/zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm/download"
 zenup_name="zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm"
-zenup_pristine_url="http://sourceforge.net/projects/zenoss/files/zenoss-4.2/zenoss-4.2.5/updates/2014-08-06/zenoss_core-4.2.5-2108.el6-pristine-SP203.tgz/download"
+zenup_pristine_url="https://sourceforge.net/projects/zenoss/files/zenoss-4.2/zenoss-4.2.5/updates/2014-08-06/zenoss_core-4.2.5-2108.el6-pristine-SP203.tgz/download"
 zenup_pristine_name="zenoss_core-4.2.5-2108.el6-pristine-SP203.tgz"
-zenup_zup_url="http://sourceforge.net/projects/zenoss/files/zenoss-4.2/zenoss-4.2.5/updates/2016-02-26/zenoss_core-4.2.5-SP671-zenup11.zup/download"
+zenup_zup_url="https://sourceforge.net/projects/zenoss/files/zenoss-4.2/zenoss-4.2.5/updates/2016-02-26/zenoss_core-4.2.5-SP671-zenup11.zup/download"
 zenup_zup_name="zenoss_core-4.2.5-SP671-zenup11.zup"
 
 #
@@ -319,9 +319,14 @@ try chmod -R go-rwx /opt/zenoss/etc
 #
 
 echo "Downloading ZenUp Files"
-download $zenup_url $zenup_name
-download $zenup_pristine_url $zenup_pristine_name
-download $zenup_zup_url $zenup_zup_name
+#download $zenup_url $zenup_name
+#download $zenup_pristine_url $zenup_pristine_name
+#download $zenup_zup_url $zenup_zup_name
+
+# For testing copy from scriptdir
+cp $zenup_name $MYTMP/$zenup_name
+cp $zenup_pristine_name $MYTMP/$zenup_pristine_name
+cp $zenup_zup_name $MYTMP/$zenup_zup_name
 
 echo "Installing ZenUp"
 install_local_rpm $zenup_name
