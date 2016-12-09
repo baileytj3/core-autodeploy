@@ -224,8 +224,10 @@ if [ -e /etc/init.d/qpidd ]; then
     disable_service qpidd
 fi
 
+# Change working directory to a temp directory and permit other users
 MYTMP="$(PATH=/sbin:/usr/sbin:/bin:/usr/bin mktemp -d)"
 cd $MYTMP || die "Couldn't change to temporary directory"
+chmod og+rx $MYTMP
 
 #
 # Install new repos
