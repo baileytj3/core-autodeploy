@@ -113,7 +113,7 @@ install_local_rpm() {
     
     # Attempt to install user provided rpms first
     if [[ -f $SCRIPTPATH/$rpm_name ]]; then
-        try yum --nogpgcheck -y localinstall $SCRIPTDIR/$rpm_name
+        try yum --nogpgcheck -y localinstall $SCRIPTPATH/$rpm_name
 
     elif [[ -f $rpm_name ]]; then
         try yum --nogpgcheck -y localinstall $rpm_name
