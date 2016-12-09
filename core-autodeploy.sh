@@ -324,9 +324,10 @@ echo "Downloading ZenUp Files"
 #download $zenup_zup_url $zenup_zup_name
 
 # For testing copy from scriptdir
-cp $zenup_name $MYTMP/$zenup_name
-cp $zenup_pristine_name $MYTMP/$zenup_pristine_name
-cp $zenup_zup_name $MYTMP/$zenup_zup_name
+try cp $zenup_name $MYTMP/$zenup_name
+try cp $zenup_pristine_name $MYTMP/$zenup_pristine_name
+try cp $zenup_zup_name $MYTMP/$zenup_zup_name
+try chmod go+rx $MYTMP/*
 
 echo "Installing ZenUp"
 install_local_rpm $zenup_name
