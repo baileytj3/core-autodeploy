@@ -53,6 +53,13 @@ zenossdep_url="http://deps.zenoss.com/yum"
 zenossdep_name="zenossdeps"
 zenossdep_rpm="$zenossdep_name-4.2.x-1.$els.noarch.rpm"
 
+zenup_url="http://sourceforge.net/projects/zenoss/files/zenup-1.1/zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm/download"
+zenup_name="zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm"
+zenup_pristine_url="http://sourceforge.net/projects/zenoss/files/zenoss-4.2/zenoss-4.2.5/updates/2014-08-06/zenoss_core-4.2.5-2108.el6-pristine-SP203.tgz/download"
+zenup_pristine_name="zenoss_core-4.2.5-2108.el6-pristine-SP203.tgz"
+zenup_zup_url="http://sourceforge.net/projects/zenoss/files/zenoss-4.2/zenoss-4.2.5/updates/2016-02-26/zenoss_core-4.2.5-SP671-zenup11.zup/download"
+zenup_zup_name="zenoss_core-4.2.5-SP671-zenup11.zup"
+
 #
 # Helper Functions
 #
@@ -88,6 +95,17 @@ disable_service() {
    try /sbin/chkconfig $1 off
 }
 
+download() {
+    url=$1
+    file=$2
+
+    try wget --no-check-certificate $url -O $file
+
+    if [ ! -f $file ];then
+        die "Failed to download $url. I can't continue"
+    fi
+}
+
 install_local_rpm() {
 
     rpm_name=$1
@@ -99,12 +117,7 @@ install_local_rpm() {
 
     # If no local package found, try to download it
     elif [[ -n $rpm_url ]]; then
-        try wget --no-check-certificate $rpm_url/$rpm_name
-
-        if [ ! -f $rpm_name ];then
-            die "Failed to download $rpm_url/$rpm_name. I can't continue"
-        fi
-
+        download $rpm_url/$rpm_name $rpm_name
         try yum --nogpgcheck -y localinstall $rpm_name
     fi
 }
@@ -234,13 +247,17 @@ echo "Installing RabbitMQ"
 install_local_rpm $rmq_rpm $rmq_url
 enable_service rabbitmq-server
 
+# Pin rabbitmq version since newer version exists on EPEL
+echo "# Pin rabbitmq-server version to 2.8.7 for Zenoss" >> /etc/yum.conf
+echo "exclude=rabbitmq-server" >> /etc/yum.conf
+
 if [ ! -f $jre_file ];then
 	echo "Downloading Oracle JRE"
 	try wget --no-check-certificate -N -O $jre_file $jre_url
 	try chmod +x $jre_file
 fi
 echo "Installing JRE"
-#try ./$jre_file
+try ./$jre_file
 
 echo "Installing rrdtool"
 install_rpm rrdtool-1.4.7
@@ -285,13 +302,37 @@ try su -l -c /opt/zenoss/bin/secure_zenoss.sh zenoss
 
 try cp $SCRIPTPATH/zenpack_actions.txt /opt/zenoss/var
 
-echo "Configuring and Starting some Base Services and Zenoss..."
-for service in memcached snmpd zenoss; do
-    enable_service $service
-done
+echo "Configuring and Starting some Base Services"
+enable_service memcached
+enable_service snmpd
 
 echo "Securing configuration files..."
 try chmod -R go-rwx /opt/zenoss/etc
+
+#
+# Update Zenoss to latest SP
+#
+
+echo "Downloading ZenUp Files"
+download $zenup_url $zenup_name
+download $zenup_pristine_url $zenup_pristine_name
+download $zenup_zup_url $zenup_zup_name
+
+echo "Installing ZenUp"
+install_local_rpm $zenup_name
+
+echo "Registering Zenoss with ZenUp"
+try su -l -c "/opt/zenup/bin/zenup init $zenup_pristine_name \$ZENHOME" zenoss
+
+echo "Initializing Zenoss"
+try service zenoss start
+try service zenoss stop
+
+echo "Installing RPS"
+try su -l -c "/opt/zenup/bin/zenup install $zenup_zup_name" zenoss
+
+echo "Starting Zenoss"
+enable_service zenoss
 
 cat << EOF
 Zenoss Core $zenoss_build install completed successfully!
