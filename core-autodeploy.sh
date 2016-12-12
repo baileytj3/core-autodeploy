@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 ####################################################
 #
 # A simple script to auto-install Zenoss Core 4.2
@@ -9,6 +8,8 @@ set -x
 # JC - Added --no-check-certificate to all wget lines
 #
 ###################################################
+
+set -eu -o pipefail -x
 
 #
 # Variables
@@ -30,8 +31,8 @@ epel_url="https://dl.fedoraproject.org/pub/epel"
 epel_name="epel-release"
 epel_rpm="$epel_name-latest-$elv.noarch.rpm"
 
-jre_file="jre-6u31-linux-x64-rpm.bin"
-jre_url="http://javadl.sun.com/webapps/download/AutoDL?BundleId=59622"
+jre_file="jre-6u45-linux-x64-rpm.bin"
+jre_url="http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jre-6u45-linux-x64-rpm.bin"
 
 mysql_url="http://www.mirrorservice.org/sites/ftp.mysql.com/Downloads/MySQL-5.5"
 mysql_v="5.5.37-1"
@@ -40,11 +41,11 @@ mysql_server_rpm="MySQL-server-$mysql_v.linux2.6.x86_64.rpm"
 mysql_shared_rpm="MySQL-shared-$mysql_v.linux2.6.x86_64.rpm"
 mysql_compat_rpm="MySQL-shared-compat-$mysql_v.linux2.6.x86_64.rpm"
 
-rmqv=2.8.7
+rmqv="2.8.7"
 rmq_url="http://www.rabbitmq.com/releases/rabbitmq-server/v${rmqv}"
 rmq_rpm="rabbitmq-server-${rmqv}-1.noarch.rpm"
 
-zenoss_build=4.2.5-2108
+zenoss_build="4.2.5-2108"
 zenoss_url="http://downloads.sourceforge.net/project/zenoss/zenoss-4.2/zenoss-4.2.5/"
 zenoss_rpm="zenoss_core-$zenoss_build.$els.x86_64.rpm"
 zenoss_gpg_key="http://wiki.zenoss.org/download/core/gpg/RPM-GPG-KEY-zenoss"
@@ -76,12 +77,21 @@ die() {
 	exit 1
 }
 
+cleanup() {
+
+    if [[ -n ${$MYTMP:-} ]]; then
+        echo "rm -rf $MYTMP"
+    fi
+}
+
+trap cleanup EXIT
+
 disable_repo() {
 	local conf=/etc/yum.repos.d/$1.repo
 	if [ ! -e "$conf" ]; then
 		die "Yum repo config $conf not found -- exiting."
 	else
-		sed -i -e 's/^enabled.*/enabled = 0/g' $conf
+		sed -i -e 's/^enabled.*/enabled = 0/g' "$conf"
 	fi
 }
 
@@ -96,10 +106,11 @@ disable_service() {
 }
 
 download() {
-    url=$1
-    file=$2
+    local url="$1"
+    local file="$2"
+    local options="${3:-}"
 
-    try wget --no-check-certificate $url -O $file
+    try "wget --no-check-certificate $options $url -O $file"
 
     if [ ! -f $file ];then
         die "Failed to download $url. I can't continue"
@@ -108,8 +119,8 @@ download() {
 
 install_local_rpm() {
 
-    rpm_name=$1
-    rpm_url=$2
+    rpm_name="$1"
+    rpm_url="${2:-}"
     
     # Attempt to install user provided rpms first
     if [[ -f $SCRIPTPATH/$rpm_name ]]; then
@@ -126,11 +137,11 @@ install_local_rpm() {
 }
 
 install_repo() {
-    repo_name=$1
-    repo_rpm=$2
-    repo_url=$3
+    repo_name="$1"
+    repo_rpm="$2"
+    repo_url="$3
 
-    installed=`rpm -qa $repo_name | grep $repo_name`
+    installed=`rpm -qa $repo_name | grep $repo_name || true`
 
     if [[ -z $installed ]]; then
         echo "Installing $repo_name since not present"
@@ -139,8 +150,8 @@ install_repo() {
 }
 
 install_rpm() {
-    rpm_name=$1
-    yum_options=$2
+    rpm_name="$1"
+    yum_options="$2"
 
     try yum -y $yum_options install $rpm_name
 }
@@ -181,7 +192,7 @@ if [ -L /opt/zenoss ]; then
 	die "/opt/zenoss appears to be a symlink. Please remove and re-run this script."
 fi
 
-if [ `rpm -qa | egrep -c -i "^mysql-"` -gt 0 ]; then
+if [ `rpm -qa | egrep -c -i "^mysql-" || true` -gt 0 ]; then
 cat << EOF
 
 It appears that the distro-supplied version of MySQL is at least partially installed,
@@ -212,7 +223,7 @@ if [ -e /etc/selinux/config ]; then
 fi
 
 #Check for and remove existing java
-openjdk="$(rpm -qa | grep java.*openjdk)"
+openjdk="$(rpm -qa | grep java.*openjdk || true)"
 if [ -n "$openjdk" ]; then
 	echo "Attempting to remove existing OpenJDK..."
 	try rpm -e $openjdk
@@ -235,7 +246,6 @@ chmod og+rx $MYTMP
 
 echo "Installing EPEL Repo"
 if [[ $(cat /etc/redhat-release) =~ ^CentOS ]]; then
-    echo "Installing EPEL through CentOS Extras repo"
     install_rpm $epel_name "--enablerepo=extras"
 else
     install repo $epel_name $epel_rpm $epel_url
@@ -258,7 +268,7 @@ echo "exclude=rabbitmq-server" >> /etc/yum.conf
 
 if [ ! -f $jre_file ];then
 	echo "Downloading Oracle JRE"
-    download $jre_url $jre_file
+    download $jre_url $jre_file "--no-cookie --header \"Cookie: oraclelicense=accept-securebackup-cookie\""
 	try chmod +x $jre_file
 fi
 echo "Installing JRE"
@@ -291,7 +301,7 @@ enable_service mysql
 #
 
 echo "Installing Zenoss"
-if [ `rpm -qa gpg-pubkey* | grep -c "aa5a1ad7-4829c08a"` -eq 0  ];then
+if [ `rpm -qa gpg-pubkey* | grep -c "aa5a1ad7-4829c08a" || true` -eq 0  ];then
 	echo "Importing Zenoss GPG Key"
 	try rpm --import $zenoss_gpg_key
 fi
