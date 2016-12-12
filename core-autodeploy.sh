@@ -29,17 +29,17 @@ popd > /dev/null
 
 epel_url="https://dl.fedoraproject.org/pub/epel"
 epel_name="epel-release"
-epel_rpm="$epel_name-latest-$elv.noarch.rpm"
+epel_rpm="${epel_name}-latest-${elv}.noarch.rpm"
 
 jre_file="jre-6u45-linux-x64-rpm.bin"
 jre_url="http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jre-6u45-linux-x64-rpm.bin"
 
 mysql_url="http://www.mirrorservice.org/sites/ftp.mysql.com/Downloads/MySQL-5.5"
 mysql_v="5.5.37-1"
-mysql_client_rpm="MySQL-client-$mysql_v.linux2.6.x86_64.rpm"
-mysql_server_rpm="MySQL-server-$mysql_v.linux2.6.x86_64.rpm"
-mysql_shared_rpm="MySQL-shared-$mysql_v.linux2.6.x86_64.rpm"
-mysql_compat_rpm="MySQL-shared-compat-$mysql_v.linux2.6.x86_64.rpm"
+mysql_client_rpm="MySQL-client-${mysql_v}.linux2.6.x86_64.rpm"
+mysql_server_rpm="MySQL-server-${mysql_v}.linux2.6.x86_64.rpm"
+mysql_shared_rpm="MySQL-shared-${mysql_v}.linux2.6.x86_64.rpm"
+mysql_compat_rpm="MySQL-shared-compat-${mysql_v}.linux2.6.x86_64.rpm"
 
 rmqv="2.8.7"
 rmq_url="http://www.rabbitmq.com/releases/rabbitmq-server/v${rmqv}"
@@ -47,12 +47,12 @@ rmq_rpm="rabbitmq-server-${rmqv}-1.noarch.rpm"
 
 zenoss_build="4.2.5-2108"
 zenoss_url="http://downloads.sourceforge.net/project/zenoss/zenoss-4.2/zenoss-4.2.5/"
-zenoss_rpm="zenoss_core-$zenoss_build.$els.x86_64.rpm"
+zenoss_rpm="zenoss_core-${zenoss_build}.${els}.x86_64.rpm"
 zenoss_gpg_key="http://wiki.zenoss.org/download/core/gpg/RPM-GPG-KEY-zenoss"
 
 zenossdep_url="http://deps.zenoss.com/yum"
 zenossdep_name="zenossdeps"
-zenossdep_rpm="$zenossdep_name-4.2.x-1.$els.noarch.rpm"
+zenossdep_rpm="${zenossdep_name}-4.2.x-1.${els}.noarch.rpm"
 
 zenup_url="https://sourceforge.net/projects/zenoss/files/zenup-1.1/zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm/download"
 zenup_name="zenup-1.1.0.267.869d67a-1.el6.x86_64.rpm"
@@ -139,7 +139,7 @@ install_local_rpm() {
 install_repo() {
     repo_name="$1"
     repo_rpm="$2"
-    repo_url="$3
+    repo_url="$3"
 
     installed=`rpm -qa $repo_name | grep $repo_name || true`
 
