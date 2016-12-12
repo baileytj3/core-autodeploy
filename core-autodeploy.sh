@@ -79,7 +79,7 @@ die() {
 
 cleanup() {
 
-    if [[ -n ${$MYTMP:-} ]]; then
+    if [[ -n ${MYTMP:-} ]]; then
         echo "rm -rf $MYTMP"
     fi
 }
